@@ -1,0 +1,41 @@
+FROM ubuntu:20.04
+
+RUN apt-get update && apt-get install -y gnupg 
+
+# ADD resources/sources.list /etc/apt/
+
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ABF5BD827BD9BF62
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FEEA9169307EA071
+
+RUN echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" >> /etc/apt/sources.list
+RUN echo "deb-src http://ppa.launchpad.net/ondrej/php/ubuntu focal main" >> /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y --option Acquire::Retries=100 --option Acquire::http::Timeout="60" \
+    php7.4-fpm \ 
+    php7.4-common \ 
+    php7.4-curl \ 
+    php7.4-pgsql \ 
+    php7.4-mysql \ 
+    php7.4-mbstring \ 
+    php7.4-xml \
+    php7.4-xmlrpc \
+    php7.4-bcmath \
+    php7.4-zip \
+    php7.4-zmq \
+    php7.4-opcache \
+    php7.4-pdo \
+    php7.4-gd \
+    php7.4-imagick \
+    php7.4-ldap \
+    php7.4-imap \
+    php7.4-intl \
+    php7.4-cli \
+    php7.4-xdebug 
+
+RUN rm -rf /var/lib/apt/lists/*
+#------------- Container Config ---------------------------------------------------------------
+
+# Expose port 8080
+EXPOSE 80
+CMD [ "bash" ]
