@@ -1,0 +1,69 @@
+FROM odanicola/php81-ubuntu:20.04 as builder
+
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /var/www/html
+
+# Install common tools 
+# RUN apt-get update && apt --fix-broken install
+# RUN apt-get update && apt-get install -y gnupg
+# RUN apt clean
+RUN apt-get update && apt-get install -y curl unzip gnupg mariadb-client git libicu-dev libpq-dev libmcrypt-dev libzmq3-dev zlib1g-dev libzip-dev wget
+
+# Install Nginx
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ABF5BD827BD9BF62
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
+RUN echo "deb http://nginx.org/packages/ubuntu/ trusty nginx" >> /etc/apt/sources.list
+RUN echo "deb-src http://nginx.org/packages/ubuntu/ trusty nginx" >> /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y nginx
+
+#------------- Supervisor Process Manager ----------------------------------------------------
+
+# Install supervisor
+RUN apt-get update && apt-get install -y supervisor
+RUN mkdir -p /var/log/supervisor
+
+RUN rm -rf /var/lib/apt/lists/*
+#------------- Container Config ---------------------------------------------------------------
+
+COPY --from=builder /usr/bin/php8.1 /usr/bin/php8.1
+COPY --from=builder /usr/sbin/php-fpm8.1 /usr/sbin/php-fpm8.1
+COPY --from=builder /usr/bin/php /usr/bin/php
+COPY --from=builder /usr/lib/php /usr/lib/php
+COPY --from=builder /etc/php /etc/php
+COPY --from=builder /usr/include/php /usr/include/php
+# COPY --from=builder /usr/share/php8.1-json /usr/share/php8.1-json
+COPY --from=builder /usr/share/php8.1-ldap /usr/share/php8.1-ldap
+COPY --from=builder /usr/share/php8.1-opcache /usr/share/php8.1-opcache
+COPY --from=builder /usr/share/php8.1-imap /usr/share/php8.1-imap
+COPY --from=builder /usr/share/php8.1-curl /usr/share/php8.1-curl
+COPY --from=builder /usr/share/php8.1-xml /usr/share/php8.1-xml
+# COPY --from=builder /usr/share/php8.1-xmlrpc /usr/share/php8.1-xmlrpc
+COPY --from=builder /usr/share/php8.1-mysql /usr/share/php8.1-mysql
+COPY --from=builder /usr/share/php8.1-gd /usr/share/php8.1-gd
+COPY --from=builder /usr/share/php8.1-mbstring /usr/share/php8.1-mbstring
+COPY --from=builder /usr/share/php8.1-zip /usr/share/php8.1-zip
+COPY --from=builder /usr/share/php8.1-intl /usr/share/php8.1-intl
+COPY --from=builder /usr/share/php8.1-common /usr/share/php8.1-common
+COPY --from=builder /usr/share/php8.1-bcmath /usr/share/php8.1-bcmath
+COPY --from=builder /usr/share/php8.1-pgsql /usr/share/php8.1-pgsql
+COPY --from=builder /usr/share/php8.1-pgsql /usr/share/php8.1-pgsql
+COPY --from=builder /usr/share/php /usr/share/php
+COPY --from=builder /usr/share/php8.1-readline /usr/share/php8.1-readline
+COPY --from=builder /usr/lib /usr/lib
+# COPY --from=builder /usr/lib/php/20180731/gd.so /usr/lib/php/20180731/gd.so
+# COPY --from=builder /usr/lib/php/20180731/imagick.so /usr/lib/php/20180731/imagick.so
+COPY --from=builder /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo 
+
+# Activate xdebug.mode to coverage
+RUN echo "xdebug.mode=coverage,develop" >> /etc/php/8.1/cli/php.ini
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.1.14
+
+# Expose port 8080
+EXPOSE 80
+CMD [ "bash" ]
